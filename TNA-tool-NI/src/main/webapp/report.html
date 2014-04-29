@@ -1,0 +1,171 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Transit Agency Summary Report</title>
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<!--might be used in case the tooltips are wanted to be rendered by jqury-ui 
+	<link rel="stylesheet" href="js/lib/jquery-ui.css" />
+	<script src="js/lib/jquery-ui.js"></script> -->
+	<link rel="stylesheet" type="text/css" href="report.css" />
+	<script src="js/lib/sorttable.js"></script> 
+<script type="text/javascript">
+var csvfile ='AgencyID, AgencyName, URL, Phone#, RouteMiles, TotalRoutes, TotalStops, PopulationServed, FareURL \n';
+var qstring = '';
+var qstringx = '0.1';
+var qstringd = '3';
+//alert('window.opener.qstringx');
+$(document).ready(function(){	
+	document.getElementById("Sradius").value = window.opener.qstringx;
+	var html = '<table id="RT" class="sortable" align="center"><tr><th id="aid">Agency ID <em title="Identification number reported in the transit agency GTFS feed.">?</em></th>'+
+		'<th id="an">Agency Name <em title="Agency name reported in the transit agency GTFS feed.">?</em></th>'+
+		'<th>Phone # <em title="Phone number to contact the transit agency.">?</em></th>'+
+		'<th>Total Routes <em title="Total number of routes operated by the transit agency.">?</em></th>'+
+		'<th>Total Stops <em title="Total number of stops operated by the transit agency.">?</em></th>'+
+		'<th>Population Served <em title="Summation of the unduplicated population count within an X radius (i.e., stop distance) of each stop operated by the transit agency. The default value for X is 0.1 miles. However, the value of the radius can be changed by the user on the text box shown on the upper right corner of the report and then pressing the <Submit> button.">?</em></th>'+
+		'<th>Fare URL <em title="If available, this field points to the fare information published by the transit agency on its web site.">?</em></th></tr>';	
+	//alert(window.opener.qstringx);	
+	$.ajax({
+		type: 'GET',
+		datatype: 'json',
+		url: '/opentripplanner-api-webapp/ws/transit/AgencySR?&x='+ window.opener.qstringx,
+		async: false,
+		success: function(d){			
+			$('h2').append('Transit Agency Summary Report <br><hr>');
+			$.each(d.agencySR, function(i,item){
+			//This is how I passed variables BW windows
+			//$.each(window.opener.replist , function(t,item){			
+			//alert('hey');
+			//S = parseInt(item.RouteMiles);			
+			//S = S/10;
+			agencytxt = "null";
+			if (item.AgencyId !== ''){
+				agencytxt = item.AgencyId;
+			}		
+			html = html + '<tr><td>' + '<a href="#" type="XR" id="'+item.AgencyId+'">'+agencytxt+'</a></td>'+ '<td><a href="' 
+			+ item.URL + '">'+ item.AgencyName + '</a></td>'+ '<td>' + item.Phone +'</td>'+ '<td><a href="#" type="RC" id="'
+			+ item.AgencyId+'">'+item.RoutesCount+'</a></td>'+ '<td><a href="#" type="SC" id="'+item.AgencyId+'">'+item.StopsCount
+			+'</a></td>'+ '<td>'+numberconv(item.PopServed) + '</td>';
+			csvfile = csvfile +item.AgencyId+', '+item.AgencyName+', '+item.URL+', '+item.Phone +', '+item.RoutesCount+', '+item.StopsCount;						    
+			if (item.FareURL !== null){
+			html = html +'<td> <a href="' + item.FareURL + '">Fares</a> </td>';
+			} else {
+				html = html + '<td>-</td>';
+				};
+			csvfile = csvfile+', '+item.PopServed+', '+ item.FareURL+' \n';
+			html = html + '</tr>';				   			
+					});			
+    }});
+	html = html + '</table>'
+	$('p').append($(html));	
+	 //$(function() {
+		// $( document ).tooltip();
+		 //});
+	$('a').click(function(e){
+	    //alert($(e.target).text()); // using jQuery
+	    if ($(this).attr('type')=="RC"){
+	    	//alert ('route for: '+$(this).attr('id'));
+	    	qstring = $(this).attr('id');
+	    	qstringx = '0.1';
+	    	qstringd = '3';
+	    	window.open('/TNA-tool-NI/routereport.html');
+	    	}else if($(this).attr('type')=="SC"){
+	    		//alert ('stop for: '+$(this).attr('id'));
+	    		qstring = $(this).attr('id');
+	    		qstringx = '0.1';
+	    		qstringd = '3';
+	    		window.open('/TNA-tool-NI/stopreport.html');	    		
+	    	}else if($(this).attr('type')=="XR"){
+	    		//alert ('stop for: '+$(this).attr('id'));
+	    		qstring = $(this).attr('id');
+	    		qstringx = '0.1';
+	    		qstringd = '3';
+	    		window.open('/TNA-tool-NI/Xreport.html');	    		
+	    	};
+	    	//alert($(this).attr('id'));    
+	});
+	$("img").hide();	
+});
+
+function numberconv(x) {
+    var parts = x.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+};
+function reload(){	
+	window.opener.qstringx = (parseFloat(document.getElementById("Sradius").value)).toString();
+	location.reload();
+};
+function closebutton(){
+	window.close();
+};
+function printbutton(){
+	window.print();
+};
+$(".export").on('click', function (event) {    
+	exportbutton.apply(this, ['export.csv']);
+});
+
+
+function exportbutton(){
+	//alert('here');
+	//csvfile= window.btoa(csvfile);
+	//csvData = 'data:application/csv;charset=utf-8,' + encodeURIComponent(csvfile);
+	//$(this).attr({
+    //        'download': 'AgencySummaryReport.csv',
+    //            'href': csvData,
+    //            'target': '_blank'
+    //    });
+	
+	var uri = 'data:application/csv;charset=utf-8;headers=Content-Disposition%3A%20attachment%3B%20Agency%3D%22Summary%20Report.csv%22%0D%0AContent-Language%3A%20en;base64,'+ window.btoa(csvfile);
+	window.open(uri, 'AgencySummaryReport.csv');
+	///alert(csvfile);
+};
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    //var havedot = (howManyDecimals(document.getElementById("Sradius").value));
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    //alert(charCode);
+    if (charCode == 46) {
+    	//alert ('test');
+    	if (document.getElementById("Sradius").value.indexOf('.') !== -1) return false; 
+    } else if (charCode > 31 && (charCode < 48 || charCode > 57)) { 
+        return false;
+    }
+    return true;
+};
+$(window).load(function () {	
+	sorttable.innerSortFunction.apply(document.getElementById('an'), []);	
+	});
+</script>
+
+
+
+</head>
+<body>
+		<div class="container">
+		<div class="headerL">
+		<h1>Transit Network Analysis Tool Reports</h1>
+		</div>
+		<div class="headerR">		
+		<input type="button" onclick="exportbutton()" title="Export Report"  value="Export Report" class="button" />
+		<input type="button" onclick="printbutton()" title="Print Report"  value="Print Report" class="button" />
+		<input type="button" onclick="closebutton()" title="Close Report"  value="Close Report" class="button" />
+		</div>
+		</div>		
+		<div class="controls">
+		<div class="headerL">
+		<h2></h2>
+		</div>
+    	<div class="headerR"> 
+    	Population Search Radius (miles) <input type="text" name="Sradius" id="Sradius" class="tbox" onkeypress="return isNumber(event)"/>
+    	<input type="button" onclick="reload()" title="Refresh Report"  value="Submit" class="button" />
+    	    	
+    	</div>	
+		</div>
+		<p><br></p>
+		<div style="width:100%; text-align:center">
+		<img src="images/ajax-loader.gif" alt="Page Loading">			
+		</div>	
+</body>
+</html>

@@ -1,0 +1,46 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Transit Network Analysis Tool</title>
+	<link rel="stylesheet" href="js/lib/jquery-ui.css" />
+	<script src="js/lib/jquery-1.9.1.min.js"></script>	
+	<link rel="stylesheet" href="js/lib/leaflet-0.7/leaflet.css" /> 
+	<script src="js/lib/leaflet-0.7/leaflet.js"></script>	  
+    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.2.1"></script>	
+	<script  src="js/lib/jstree-v.pre1.0/jquery.jstree.js"></script>	
+	<link rel="stylesheet" type="text/css" href="client.css" />	
+	<script src="js/lib/jquery-ui.js"></script>
+	<script src="js/lib/Polylinencoded.js"></script>
+	<link rel="stylesheet" href="js/lib/MarkerCluster/MarkerCluster.css" />
+	<link rel="stylesheet" href="js/lib/MarkerCluster/MarkerCluster.styles.css" />
+	<link rel="stylesheet" href="js/lib/MarkerCluster/MarkerCluster.Default.css" />
+	<script src="js/lib/MarkerCluster/leaflet_markercluster-src.js"></script>
+	<script src="js/lib/jquery_dialogextend.js"></script>
+	<script type="text/javascript" src="js/otp/shapedata.js"></script>
+<script type="text/javascript">
+var qstringx = '0.1';
+//$(function() {
+	//$( "#toolbox" ).dialogExtend({maximizable:true, minimizable: true, collapsable:true, minimizeLocation: "left"});
+	//$( "#toolbox" ).resizable({ containment: "#map" , maxHeight: 850, maxWidth: 600, minHeight: 40, minWidth: 340});
+	//$( "#toolbox" ).draggable({handle: "h1",cursor: "move",axis: "x",containment: "#map", scroll: false});
+	
+	//});
+//var replist = [];
+function openrep(){
+	qstringx = '0.1';
+	window.open('/TNA-tool-NI/report.html');	
+};
+</script>
+
+</head>
+
+<body>
+	<div id='list' class='list'>
+	</div>
+	<div id="map"> </div>
+	<script type="text/javascript" src="js/otp/client.js"></script>
+	
+</body>
+
+</html>

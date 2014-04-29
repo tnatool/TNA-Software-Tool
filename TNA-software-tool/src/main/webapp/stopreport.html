@@ -1,0 +1,120 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Transit Agency Stops Report</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
+	<link rel="stylesheet" type="text/css" href="report.css" />
+	<script src="js/lib/sorttable.js"></script>	
+<script type="text/javascript">
+var csvfile ='StopID, StopName, RoutesStopBelongsTo, Population \n';
+$(document).ready(function(){	
+	document.getElementById("Sradius").value = window.opener.qstringx ;	
+		//alert(item);		
+	var html = '<table id="RT" class="sortable" align="center"><tr><th>Stop ID</th><th id="sn">Stop Name</th><th>Routes Stop Belongs To</th><th>Population</th></th>';	
+	//alert('/opentripplanner-api-webapp/ws/transit/StopsR?&agency='+window.opener.qstring+'&x='+window.opener.qstringx);
+	$.ajax({
+		type: 'GET',
+		datatype: 'json',
+		url: '/opentripplanner-api-webapp/ws/transit/StopsR?&agency='+window.opener.qstring+'&x='+window.opener.qstringx,
+		async: false,
+		success: function(d){			
+			//alert(d.length);
+			$('h2').append(d.AgencyName+' Stops Report<br><hr>');
+			$.each(d.StopR, function(i,item){
+			//This is how I passed variables BW windows
+			//$.each(window.opener.replist , function(t,item){			
+			//alert('hey');
+			//S = parseInt(item.ServiceMiles);			
+			//S = S/10;			
+			html = html + '<tr><td>' + item.StopId + '</td>'; 
+			if (item.URL !== null){
+				html = html + '<td> <a href="' + item.URL + '">'+item.StopName+'</a> </td>';
+				} else {
+					html = html + '<td>'+item.StopName+'</td>';
+					};
+			html = html+ '<td>' + item.Routes +'</td><td>'+ numberconv(item.PopWithinX)+'</td></tr>';
+			csvfile = csvfile +item.StopId+', '+item.StopName+', '+item.Routes+', '+item.PopWithinX +', '+ item.URL +' \n';						    
+			//html = html + '</tr>';					   			
+					});					
+    }});
+	html = html + '</table>'
+	$('p').append($(html));	
+	$('a').click(function(e){
+	    //alert($(e.target).text()); // using jQuery
+	    if ($(this).attr('type')=="RC"){
+	    	//alert ('route for: '+$(this).attr('id'));
+	    	window.open('/TNA-software-tool/routreport.html');
+	    	}else if($(this).attr('type')=="SC"){
+	    		//alert ('stop for: '+$(this).attr('id'));
+	    		window.open('/TNA-software-tool/stopreport.html');
+	    	};
+	    	//alert($(this).attr('id'));	    
+	});
+	$("img").hide();
+});	
+function numberconv(x) {
+    var parts = x.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+};
+function reload(){	
+	window.opener.qstringx = (parseFloat(document.getElementById("Sradius").value)).toString();
+	location.reload();
+}
+function closebutton(){
+	window.close();
+};
+function printbutton(){
+	window.print();
+};
+function exportbutton(){
+	//csvfile= window.btoa(csvfile);
+	var uri = 'data:application/csv;fileName=Report.csv;base64,'+ window.btoa(csvfile);
+	window.open(uri);
+	//alert(csvfile);
+};
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    //var havedot = (howManyDecimals(document.getElementById("Sradius").value));
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    //alert(charCode);
+    if (charCode == 46) {
+    	//alert ('test');
+    	if (document.getElementById("Sradius").value.indexOf('.') !== -1) return false; 
+    } else if (charCode > 31 && (charCode < 48 || charCode > 57)) { 
+        return false;
+    }
+    return true;
+};
+$(window).load(function () {
+	sorttable.innerSortFunction.apply(document.getElementById('sn'), []);
+	});
+</script>
+</head>
+<body>
+		<div class="container">
+		<div class="headerL">
+		<h1>Transit Network Analysis Tool Reports</h1>
+		</div>
+		<div class="headerR">
+		<input type="button" onclick="exportbutton()" title="Export Report"  value="Export Report" class="button" />
+		<input type="button" onclick="printbutton()" title="Print Report"  value="Print Report" class="button" />
+		<input type="button" onclick="closebutton()" title="Close Report"  value="Close Report" class="button" />
+		</div>
+		</div>
+		<div class="controls">
+		<div class="headerL">
+		<h2></h2>
+		</div>
+    	<div class="headerR"> 
+    	Population Search Radius (miles) <input type="text" name="Sradius" id="Sradius" class="tbox" onkeypress="return isNumber(event)"/>
+    	<input type="button" onclick="reload()" title="Refresh Report"  value="Submit" class="button" />
+    	</div>	
+		</div>
+		<p><br></p>
+		<div style="width:100%; text-align:center">
+		<img src="images/ajax-loader.gif" alt="Page Loading">			
+		</div>				
+</body>
+</html>

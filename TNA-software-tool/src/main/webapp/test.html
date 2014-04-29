@@ -1,0 +1,74 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>OTP Analyst Client</title>
+	<!-- jsTree is a javascript based, cross browser tree component.  -->
+	
+	
+	<!--jQuery is a fast, small, and feature-rich JavaScript library. It makes things like HTML document traversal and manipulation, event handling, animation, and Ajax much simpler with an easy-to-use API that works across a multitude of browsers. -->
+	<!--  <script type="text/javascript" src="http://static.jstree.com/v.1.0pre/jquery.js"></script>-->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
+	
+	<script  src="js/lib/jstree-v.pre1.0/jquery.jstree.js"></script>
+	<script type="text/javascript">
+function LoadAgencyList(callback){
+	var html = '';
+	$.ajax({
+		type: 'GET',
+		datatype: 'json',
+		url: '/opentripplanner-api-webapp/ws/transit/agencyIds',
+		async: false,
+		success: function(d){
+		$.each(d.agencies, function(i,agency){
+			html = html + '<li><a>' + agency.name + '</a><ul>';
+            $.ajax({
+        		type: 'GET',
+        		datatype: 'json',
+        		url: '/opentripplanner-api-webapp/ws/transit/routes?&agency=' + agency.id,
+        		async: false,
+        		success: function(r){
+        			//alert('hey');
+        			//alert(r.routes.length);
+        			$.each(r.routes, function(i,route){
+        				 html = html + '<li><a>' + route.routeShortName +'('+ route.routeLongName + ')' + '</a></li>';        				
+        			});
+        		}
+        		});
+            html = html +'</ul></li>';            
+        });
+        callback (html);		
+        }
+    });
+};
+	$(document).ready(function(){    
+		LoadAgencyList(AddtoPage);
+});
+	function AddtoPage(data){
+		//alert('hi');
+		data = '<ul><li><a>Oregon Transit Agencies</a><ul>'+data+'</ul></li></ul>';
+		//$('.list').append($(data));
+		$("#list").jstree({
+			"html_data" : {
+				"data" : data
+			},			
+			"themes": {
+	            "theme": "default-rtl",
+	            "url": "js/lib/jstree-v.pre1.0/themes/default-rtl/style.css",
+	            "dots": false,
+	            "icons":false
+	        },
+			"plugins" : [ "themes","html_data", "checkbox", "sort", "ui" ]
+		});
+	};
+</script>
+</head>
+
+<body>
+<div id="list" class="list"></div>
+
+		
+		
+</body>
+
+</html>

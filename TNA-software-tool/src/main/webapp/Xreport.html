@@ -1,0 +1,150 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Transit Agency Extended Report</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
+	<script src="js/lib/jquery-ui.js"></script>
+	<script src="js/lib/jquery.multiselect.js"></script>
+	<link rel="stylesheet" type="text/css" href="report.css" />
+	<link rel="stylesheet" type="text/css" href="js/lib/jquery.multiselect.css" />
+	<link rel="stylesheet" type="text/css" href="js/lib/jquery-ui.css" />
+	 
+<script type="text/javascript">
+var csvfile ='AgencyID, AgencyName, RouteMiles, Route Stops, Stops Per Route Mile, Population Served (Unduplicated), Service Miles, Service Stops, Population Served By Service\n';
+var qstring = '';
+var qstringx = '0.1';
+//alert(window.opener.qstring);
+$(document).ready(function(){
+	$("#cbox").multiselect({
+		header: true,
+		checkAllText: "All days",
+		uncheckAllText: "No days",
+		noneSelectedText: "Select a day",
+		selectedText: "# day(s) selected",
+		multiple: true
+	});
+	document.getElementById("Sradius").value = window.opener.qstringx;	
+	//alert(window.opener.qstringd);	
+	$.each(window.opener.qstringd.split(""), function(i,item){
+		//alert(item);
+		$("#cbox").multiselect("widget").find(":checkbox[value='"+item+"']").click();				
+	});
+	//$("#cbox").multiselect('refresh');
+	//document.getElementById ("cbox").value = window.opener.qstringd;
+	var html = '<table id="RT" class="sortable" align="center"><tr><th id="aid">Agency ID</th><th id="an">Agency Name</th><th>Route Miles</th><th>Route Stops</th><th>Stops Per Route Mile</th><th>Population Served By Route(Unduplicated)</th><th>Service Miles</th><th>Service Stops</th><th>Population Served By Service</th></tr>';	
+	//alert(window.opener.qstringx);
+	//alert($("#cbox").multiselect("widget").find(":checkbox"));
+	$.ajax({
+		type: 'GET',
+		datatype: 'json',
+		url: '/opentripplanner-api-webapp/ws/transit/AgencyXR?&agency='+window.opener.qstring+'&day='+window.opener.qstringd+'&x='+ window.opener.qstringx,
+		async: false,
+		success: function(item){			
+			$('h2').append('Transit Agency Extended Report <br><hr>');
+			//alert(item.AgencyId);
+			//$.each(d, function(i,item){						
+			html = html + '<tr><td>' + item.AgencyId +'</td><td>' + item.AgencyName +'</td><td>' + numberconv(item.RouteMiles) +'</td><td>' + numberconv(item.StopCount) +'</td><td>' + numberconv(item.StopPerRouteMile) +'</td><td>' + numberconv(item.PopServed) +'</td><td>'+numberconv(item.ServiceMiles)+'</td><td>'+ numberconv(item.ServiceStops) +'</td><td>'+numberconv(item.PopServedByService)+'</td></tr>';
+			csvfile = csvfile +item.AgencyId+', '+item.AgencyName+', '+ item.RouteMiles +', '+item.StopCount+', '+item.StopPerRouteMile+', '+item.PopServed+', '+item.ServiceMiles+', '+item.ServiceStops+', '+item.PopServedByService+' \n';						    
+			//		});			
+    }});
+	html = html + '</table>'
+	$('p').append($(html));	
+	$('a').click(function(e){
+	    //alert($(e.target).text()); // using jQuery
+	    if ($(this).attr('type')=="RC"){
+	    	//alert ('route for: '+$(this).attr('id'));
+	    	qstring = $(this).attr('id');
+	    	qstringx = '0.1';
+	    	window.open('/TNA-software-tool/routereport.html');
+	    	}else if($(this).attr('type')=="SC"){
+	    		//alert ('stop for: '+$(this).attr('id'));
+	    		qstring = $(this).attr('id');
+	    		qstringx = '0.1';
+	    		window.open('/TNA-software-tool/stopreport.html');	    		
+	    	};
+	    	//alert($(this).attr('id'));    
+	});
+	$("img").hide();	
+});
+function numberconv(x) {
+    var parts = x.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+};
+function reload(){		
+	window.opener.qstringx = (parseFloat(document.getElementById("Sradius").value)).toString();
+	//var days = $("#cbox").val();
+	days = "";
+	$.each($("#cbox").multiselect("getChecked"), function(i,item){
+	days = days+item.value;
+	});
+	//alert(days);
+	$("#cbox").multiselect('uncheckAll');
+	window.opener.qstringd = days;	
+	location.reload();	
+};
+function closebutton(){
+	window.close();
+};
+function printbutton(){
+	window.print();
+};
+function exportbutton(){
+	//csvfile= window.btoa(csvfile);
+	var uri = 'data:application/csv;fileName=Report.csv;base64,'+ window.btoa(csvfile);
+	window.open(uri);
+	//alert(csvfile);
+};
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    //var havedot = (howManyDecimals(document.getElementById("Sradius").value));
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    //alert(charCode);
+    if (charCode == 46) {
+    	//alert ('test');
+    	if (document.getElementById("Sradius").value.indexOf('.') !== -1) return false; 
+    } else if (charCode > 31 && (charCode < 48 || charCode > 57)) { 
+        return false;
+    }
+    return true;
+};
+</script>
+</head>
+<body>
+		<div class="container">
+		<div class="headerL">
+		<h1>Transit Network Analysis Tool Reports</h1>
+		</div>
+		<div class="headerR">
+		<input type="button" onclick="exportbutton()" title="Export Report"  value="Export Report" class="button" />
+		<input type="button" onclick="printbutton()" title="Print Report"  value="Print Report" class="button" />
+		<input type="button" onclick="closebutton()" title="Close Report"  value="Close Report" class="button" />
+		</div>
+		</div>		
+		<div class="controls">
+		<div class="headerL">
+		<h2></h2>
+		</div>
+    	<div class="headerR"> 
+    	Days of Week 
+    	<select id="cbox"  multiple="multiple" size="3">
+ 		<option value="1">Saturday</option>
+  		<option value="2">Sunday</option>
+  		<option value="3">Monday</option>
+  		<option value="4">Tuesday</option>
+  		<option value="5">Wednesday</option>
+  		<option value="6">Thursday</option>
+  		<option value="7">Friday</option>
+		</select> 
+    	Population Search Radius (miles) <input type="text" name="Sradius" id="Sradius" class="tbox" onkeypress="return isNumber(event)"/>
+    	<input type="button" onclick="reload()" title="Refresh Report"  value="Submit" class="button" />
+    	    	
+    	</div>	
+		</div>
+		<p><br></p>
+		<div style="width:100%; text-align:center">
+		<img src="images/ajax-loader.gif" alt="Page Loading">			
+		</div>	
+</body>
+</html>

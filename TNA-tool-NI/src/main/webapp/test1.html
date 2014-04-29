@@ -1,0 +1,81 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>OTP Analyst Client</title>
+	<!-- jsTree is a javascript based, cross browser tree component.  -->
+	
+	
+	<!--jQuery is a fast, small, and feature-rich JavaScript library. It makes things like HTML document traversal and manipulation, event handling, animation, and Ajax much simpler with an easy-to-use API that works across a multitude of browsers. -->
+	<!--  <script type="text/javascript" src="http://static.jstree.com/v.1.0pre/jquery.js"></script>-->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
+	
+	<script  src="js/lib/jstree-v.pre1.0/jquery.jstree.js"></script>
+	<script type="text/javascript">
+
+	$(document).ready(function(){    
+		//LoadAgencyList(AddtoPage);
+		$("#list").jstree({
+			"checkbox": {
+	              
+	              two_state: true
+	           },
+			"json_data" : {
+				"ajax" : {
+	                "url" : "/opentripplanner-api-webapp/ws/transit/menu",
+	                "type" : "get",	                
+	                "success" : function(ops) {
+	                	return ops.data;
+	                }    	               
+	            },
+	            "progressive_render" : true
+			},
+			"themes": {
+	            "theme": "default-rtl",
+	            "url": "js/lib/jstree-v.pre1.0/themes/default-rtl/style.css",
+	            "dots": false,
+	            "icons":false
+	        },
+			"plugins" : [ "themes","json_data", "checkbox", "sort", "ui" ]			
+		});	
+		
+	})
+	.bind("change_state.jstree", function (e, d) {
+    var tagName = d.args[0].tagName;
+    var refreshing = d.inst.data.core.refreshing;
+    if ((tagName == "A" || tagName == "INS")&&
+    	      (refreshing != true && refreshing != "undefined")) {
+    	alert(d.rslt.attr("id")+" value: "+$("#" + d.rslt.attr("id") + ".jstree-checked").length); 
+    	//if (d.rslt.attr("type")=="agency") {
+    		//if (($("#" + d.rslt.attr("id") + ".jstree-checked").length)>0){
+    			//alert(d.rslt.attr("id"));
+    			//var nodeid = d.rslt.attr("id").split("_")[1];
+    			//alert(nodeid);
+    			//Layers = Layers + 1;    			
+    			//$("#" + d.rslt.attr("id") + ".jstree-checked").css("background-color", colorset[Layers]);
+    			//getdata(1,d.rslt.attr("id"),Layers,disponmap,$("#" + d.rslt.attr("id") + ".jstree-checked").text());
+    			//var marker = L.marker([44.574606,-123.27987]).addTo(stops);
+    		//} else {    			
+    				//Layers = Layers -1;
+    				//$("#" + d.rslt.attr("id") + ".jstree-unchecked").css("background-color","");
+    				//stops.eachLayer(function (layer) {
+    				//if (layer._leaflet_id == d.rslt.attr("id")){
+    				//stops.removeLayer(layer);
+    				//}
+    				//});	
+    				
+    		//}
+    	//}
+    };
+});
+</script>
+</head>
+
+<body>
+<div id="list" class="list"></div>
+
+		
+		
+</body>
+
+</html>

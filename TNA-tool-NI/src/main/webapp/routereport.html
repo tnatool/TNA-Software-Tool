@@ -1,0 +1,159 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>Transit Agency Routes Report</title>
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="report.css" />	
+	<script src="js/lib/jquery-ui.js"></script>
+	<script src="js/lib/jquery.multiselect.js"></script>	
+	<link rel="stylesheet" type="text/css" href="js/lib/jquery.multiselect.css" />
+	<link rel="stylesheet" type="text/css" href="js/lib/jquery-ui.css" />
+	<script src="js/lib/sorttable.js"></script> 
+<script type="text/javascript">
+var csvfile ='RouteID, RouteName, RouteLongName, RouteType, RouteLength, TotalStops, UnduplicatedPopulation, Service Stops, Population Served by Service, ServiceMiles, RouteDescription \n';
+var qstring = '';
+var qstringx = '0.1';
+var qstringd = '3';
+$(document).ready(function(){ 
+	$("#cbox").multiselect({
+		header: true,
+		checkAllText: "All days",
+		uncheckAllText: "No days",
+		noneSelectedText: "Select a day",
+		selectedText: "# day(s) selected",
+		multiple: true
+	});
+	document.getElementById("Sradius").value = window.opener.qstringx ;
+	$.each(window.opener.qstringd.split(""), function(i,item){
+		//alert(item);
+		$("#cbox").multiselect("widget").find(":checkbox[value='"+item+"']").click();				
+	});
+	//document.getElementById ("cbox").value = window.opener.qstringd;
+	var html = '<table id="RT" class="sortable" align="center"><tr><th>Route ID <em title="Unique route identification number reported in the transit agency GTFS feed.">?</em></th>'+
+			'<th id="rn">Route Name <em title="Route short name as reported in the transit agency GTFS feed.">?</em></th>'+
+			'<th>Route Long Name <em title="Route long name as reported in the transit agency GTFS feed.">?</em></th>'+
+			'<th>Route Type <em title="Type of transportation used on a route: 0-Tram, Streetcar & Light rail 1-Subway & Metro 2-Rail 3-Bus 4-Ferry 5-Cable car 6-Gondola & Suspended cable car 7-Funicular">?</em></th>'+
+			'<th>Route Length <em title="Length of the longest route variant for the given route.">?</em></th>'+
+			'<th>Total Stops <em title="Total number of stops on the route.">?</em></th>'+
+			'<th>Unduplicated Population <em title="Summation of the unduplicated population count within an X radius (i.e., stop distance) of each stop on a route. The default value for X is 0.1 miles. However, the value of the radius can be changed by the user on the text box shown on the upper right corner of the report and then pressing the <Submit> button.">?</em></th>'+
+			'<th>Service Stops <em title="Number of stops scheduled on all trips in a route. The service stops for a route is calculated as its stop count multiplied by the number of visits per stop.">?</em></th>'+
+			'<th>Population Served by Route <em title="Total unduplicated population impacted within an X-mile radius (i.e., stop distance) of all stops on all trips. The Population Served by Route for a route is calculated as route service stops multiplied by the unduplicated population within an X-mile radius (i.e., stop distance) of all stops on all trips.">?</em></th>'+
+			'<th>Service Miles <em title="Total miles driven by a transit agency over all round trips of a route. Service miles may be calculated for a specific day of the week, a combination of days of the week (e.g., Monday and Wednesday) of for a seven day week.">?</em></th>'+
+			'<th>Route Description <em title="If available, this field contains a description of the route (the value is null otherwise).">?</em></th></tr>';	
+	//alert(window.opener.qstring);
+	$.ajax({
+		type: 'GET',
+		datatype: 'json',
+		url: '/opentripplanner-api-webapp/ws/transit/RoutesR?&agency='+window.opener.qstring+'&day='+window.opener.qstringd+'&x='+window.opener.qstringx,
+		async: false,
+		success: function(d){			
+			//alert(d.length);
+			$('h2').append(d.AgencyName+' Routes Report<br><hr>');
+			$.each(d.RouteR, function(i,item){						
+			html = html + '<tr><td>' + item.RouteId + '</td><td>' + item.RouteSName + '</td><td>' + item.RouteLName +'</td><td>'+ item.RouteType +'</td><td>'+item.RouteLength +'</td><td><a href="#" id="'+ item.RouteId+'">'+item.StopsCount+'</a></td><td>'+ numberconv(item.PopWithinX)+'</td><td>'+numberconv(item.Stopportunity)+'</td><td>'+numberconv(item.PopStopportunity)+'</td><td>'+numberconv(item.ServiceMiles)+'</td><td>'+item.RouteDesc+'</td></tr>';
+			csvfile = csvfile +item.RouteId+', '+item.RouteSName+', '+item.RouteLName+', '+item.RouteType +', '+item.RouteLength+', '+item.StopsCount +', '+item.PopWithinX+', '+item.Stopportunity+', '+item.PopStopportunity+', '+item.ServiceMiles+', '+item.RouteDesc+' \n';						    
+			//html = html + '</tr>';					   			
+					});					
+    }});
+	html = html + '</table>'
+	$('p').append($(html));	
+	$('a').click(function(e){
+		//alert($(this).attr('id'));
+		if ($(this).attr('id')!==undefined){
+	    //alert($(e.target).text()); // using jQuery
+	    qstring = window.opener.qstring + '&route=' + $(this).attr('id');	    
+	    window.open('/TNA-tool-NI/stopreport.html');
+	    	//alert($(this).attr('id'));	    
+	}});
+	$("img").hide();
+});	
+	
+function numberconv(x) {
+    var parts = x.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+};	
+
+function reload(){	
+	window.opener.qstringx = (parseFloat(document.getElementById("Sradius").value)).toString();
+	//window.opener.qstringd = document.getElementById("cbox").value;
+	days = "";
+	$.each($("#cbox").multiselect("getChecked"), function(i,item){
+	days = days+item.value;
+	});
+	//alert(days);
+	$("#cbox").multiselect('uncheckAll');
+	window.opener.qstringd = days;
+	location.reload();
+};
+
+function closebutton(){
+	window.close();
+};
+function printbutton(){
+	window.print();
+};
+function exportbutton(){
+	//csvfile= window.btoa(csvfile);
+	var uri = 'data:application/csv;fileName=Report.csv;base64,'+ window.btoa(csvfile);
+	window.open(uri);
+	//alert(csvfile);
+};		
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    //var havedot = (howManyDecimals(document.getElementById("Sradius").value));
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    //alert(charCode);
+    if (charCode == 46) {
+    	//alert ('test');
+    	if (document.getElementById("Sradius").value.indexOf('.') !== -1) return false; 
+    } else if (charCode > 31 && (charCode < 48 || charCode > 57)) { 
+        return false;
+    }
+    return true;
+};
+$(window).load(function () {	
+	sorttable.innerSortFunction.apply(document.getElementById('rn'), []);
+	});
+</script>
+
+
+
+</head>
+<body>
+		<div class="container">
+		<div class="headerL">
+		<h1>Transit Network Analysis Tool Reports</h1>
+		</div>
+		<div class="headerR">
+		<input type="button" onclick="exportbutton()" title="Export Report"  value="Export Report" class="button" />
+		<input type="button" onclick="printbutton()" title="Print Report"  value="Print Report" class="button" />
+		<input type="button" onclick="closebutton()" title="Close Report"  value="Close Report" class="button" />
+		</div>
+		</div>
+		<div class="controls">
+		<div class="headerL">
+		<h2></h2>
+		</div>
+    	<div class="headerR"> 
+    	Day of Week 
+    	<select id="cbox"  multiple="multiple" size="3">
+ 		<option value="1">Saturday</option>
+  		<option value="2">Sunday</option>
+  		<option value="3">Monday</option>
+  		<option value="4">Tuesday</option>
+  		<option value="5">Wednesday</option>
+  		<option value="6">Thursday</option>
+  		<option value="7">Friday</option>
+		</select> 
+    	Population Search Radius (miles) <input type="text" name="Sradius" id="Sradius" class="tbox" onkeypress="return isNumber(event)"/>
+    	<input type="submit" onclick="reload()" title="Refresh Report"  value="Submit" class="button" />
+    	</div>	
+		</div>
+		<p><br></p>
+		<div style="width:100%; text-align:center">
+		<img src="images/ajax-loader.gif" alt="Page Loading">			
+		</div>	
+</body>
+</html>

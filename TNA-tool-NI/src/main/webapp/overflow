@@ -1,0 +1,20 @@
+$("#list").tree({
+			  data: {
+			    async: true,
+			    type: "json",
+			    opts: {
+			      method: "GET",
+			      url: "/opentripplanner-api-webapp/ws/transit/agencyIds"
+			    }
+			  },
+			  callback: {
+			    beforedata: function(NODE, TREE_OBJ) {
+			      return $(NODE).attr("id") === "" ?
+			       { id: $(NODE).find("a:first").attr("id")} :
+			       { id: $(NODE).attr("id") || 0 };
+			    },
+			    onchange: function(NODE) {
+			      document.location.href = $(NODE).children("a:first").attr("href");
+			    }
+			  }
+			});
